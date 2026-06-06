@@ -10,5 +10,5 @@ services:
     environment:
       - JUPYTER_ENABLE_LAB=yes  # Optional: Launches JupyterLab instead of regular Notebook
     volumes:
-      - ./notebooks:/home/jovyan/src
+      - ./src:/home/jovyan/src
       - ./data:/home/jovyan/data
