@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
+**-checkpoint.ipynb
+data/**
+!data/.gitkeep
