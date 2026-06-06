@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  jupyter-spark:
+    image: jupyter/pyspark-notebook:latest
+    container_name: spark_notebook_container
+    ports:
+      - "8888:8888"  # Jupyter Notebook Web UI
+      - "4040:4040"  # Spark Monitoring UI
+    environment:
+      - JUPYTER_ENABLE_LAB=yes  # Optional: Launches JupyterLab instead of regular Notebook
+    volumes:
+      - ./notebooks:/home/jovyan/src
+      - ./data:/home/jovyan/data
