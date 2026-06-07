@@ -9,8 +9,10 @@ from pathlib import Path
 
 from pyspark.sql import functions as F
 
-from data import BASE_DIR, create_spark_session, load_plays
-from logging_config import configure_logging
+from utils.constants import BASE_DIR, DATA_FILE, SCHEMA, SESSION_GAP_IN_MIN
+from utils.helpers import create_spark_session, load_tsv
+from utils.logging import configure_logging
+from utils.sessions import add_session_ids, add_sessions
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,9 @@ OUTPUT_FILE = str(BASE_DIR / "data/results/excercise2_top_10_songs_in_top_50_lon
 
 def main() -> None:
     spark = create_spark_session()
-    df = load_plays(spark)
+    df = load_tsv(spark, DATA_FILE, SCHEMA)
+    df = add_sessions(df, SESSION_GAP_IN_MIN)
+    df = add_session_ids(df)
 
     top_50_longest_sessions = (
         df.groupBy("user_id", "session")

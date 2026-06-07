@@ -1,15 +1,14 @@
 """Download and extract the Last.fm 1K dataset."""
 import logging
 import tarfile
-from pathlib import Path
 
 import requests
 
-from logging_config import configure_logging
+from utils.constants import BASE_DIR
+from utils.logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
 
 BASE_URL = "http://mtg.upf.edu/static/datasets/last.fm"
@@ -17,7 +16,7 @@ FILE_NAME = "lastfm-dataset-1K.tar.gz"
 DOWNLOAD_URL = f"{BASE_URL}/{FILE_NAME}"
 
 
-def download() -> Path:
+def download() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     output_file = DATA_DIR / FILE_NAME
 
@@ -48,7 +47,7 @@ def download() -> Path:
     return output_file
 
 
-def extract(archive: Path) -> None:
+def extract(archive) -> None:
     extracted_dir = DATA_DIR / "lastfm-dataset-1K"
     if extracted_dir.exists():
         logger.info("Already extracted: %s", extracted_dir)

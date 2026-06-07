@@ -19,3 +19,10 @@ services:
   exercise3:
     <<: *spark
     command: python src/exercise3.py
+
+  all:
+    <<: *spark
+    command: >
+      sh -c "python src/ingest.py &&
+             python src/exercise2.py &&
+             python src/exercise3.py"

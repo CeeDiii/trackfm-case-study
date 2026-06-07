@@ -14,8 +14,10 @@ from prophet import Prophet
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from data import BASE_DIR, create_spark_session, load_plays
-from logging_config import configure_logging
+from utils.constants import BASE_DIR, DATA_FILE, SCHEMA, SESSION_GAP_IN_MIN
+from utils.helpers import create_spark_session, load_tsv
+from utils.logging import configure_logging
+from utils.sessions import add_session_ids, add_sessions
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,9 @@ def forecast(daily_df, horizon_days: int = FORECAST_HORIZON_DAYS):
 
 def main() -> None:
     spark = create_spark_session()
-    df = load_plays(spark)
+    df = load_tsv(spark, DATA_FILE, SCHEMA)
+    df = add_sessions(df, SESSION_GAP_IN_MIN)
+    df = add_session_ids(df)
 
     sessions = build_session_summary(df)
 
