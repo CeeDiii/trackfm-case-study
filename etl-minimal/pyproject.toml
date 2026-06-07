@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
     "pandas>=2.0",
-    "prophet>=1.1",
+    "statsforecast>=1.7",
     "pyspark>=3.5",
 ]
 

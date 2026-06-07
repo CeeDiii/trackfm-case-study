@@ -5,12 +5,15 @@ Metric options (set FORECAST_METRIC):
   "session_count"        — daily number of sessions
   "avg_duration_minutes" — daily average session duration in minutes
 
-Forecast covers 90 days beyond the user's last recorded session.
+AutoARIMA is trained on all users' daily data in a single call. Predictions
+are then filtered to the top user, giving exactly FORECAST_HORIZON_DAYS rows.
 """
 import logging
 from pathlib import Path
 
-from prophet import Prophet
+import pandas as pd
+from statsforecast import StatsForecast
+from statsforecast.models import AutoARIMA
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
@@ -50,28 +53,51 @@ def get_top_user(session_summary: DataFrame) -> str:
     )
 
 
-def build_daily_metric(session_summary: DataFrame, user_id: str, metric: str):
-    """Build a daily time series for a single user, ready for Prophet (columns: ds, y)."""
-    user_sessions = (
+def build_daily_metric(session_summary: DataFrame, metric: str) -> pd.DataFrame:
+    """Build a per-user daily time series in statsforecast format (unique_id, ds, y)."""
+    with_date = session_summary.withColumn("date", F.to_date("session_start"))
+
+    if metric == "session_count":
+        daily = with_date.groupBy("user_id", "date").agg(F.count("session_id").alias("y"))
+    else:
+        daily = with_date.groupBy("user_id", "date").agg(F.avg("duration_minutes").alias("y"))
+
+    return (
+        daily.orderBy("user_id", "date")
+        .toPandas()
+        .rename(columns={"user_id": "unique_id", "date": "ds"})
+    )
+
+
+def get_user_last_n_days(session_summary: DataFrame, user_id: str, n: int) -> pd.DataFrame:
+    """Return a pandas DataFrame of the n most recent session-days for the given user."""
+    return (
         session_summary
         .filter(F.col("user_id") == user_id)
         .withColumn("date", F.to_date("session_start"))
+        .groupBy("date")
+        .agg(F.count("session_id").alias("session_count"))
+        .orderBy("date", ascending=False)
+        .limit(n)
+        .toPandas()
+        .sort_values("date")
     )
 
-    if metric == "session_count":
-        daily = user_sessions.groupBy("date").agg(F.count("session_id").alias("y"))
-    else:
-        daily = user_sessions.groupBy("date").agg(F.avg("duration_minutes").alias("y"))
 
-    return daily.orderBy("date").toPandas().rename(columns={"date": "ds"})
-
-
-def forecast(daily_df, horizon_days: int = FORECAST_HORIZON_DAYS):
-    """Fit a Prophet model and return predictions for the next horizon_days days."""
-    m = Prophet()
-    m.fit(daily_df)
-    future = m.make_future_dataframe(periods=horizon_days)
-    return m.predict(future)[["ds", "yhat", "yhat_lower", "yhat_upper"]]
+def forecast(daily_df: pd.DataFrame, user_id: str, horizon_days: int = FORECAST_HORIZON_DAYS) -> pd.DataFrame:
+    """Train AutoARIMA on all users and return horizon_days predictions for user_id."""
+    sf = StatsForecast(models=[AutoARIMA(season_length=7)], freq="D", n_jobs=-1)
+    sf.fit(daily_df)
+    predictions = sf.predict(h=horizon_days, level=[90])
+    result = predictions[predictions["unique_id"] == user_id].copy()
+    for col in ["AutoARIMA", "AutoARIMA-lo-90", "AutoARIMA-hi-90"]:
+        result[col] = result[col].clip(lower=0)
+    return result[["ds", "AutoARIMA", "AutoARIMA-lo-90", "AutoARIMA-hi-90"]].rename(columns={
+        "ds": "date",
+        "AutoARIMA": FORECAST_METRIC,
+        "AutoARIMA-lo-90": f"{FORECAST_METRIC}_lower",
+        "AutoARIMA-hi-90": f"{FORECAST_METRIC}_upper",
+    })
 
 
 def main() -> None:
@@ -86,12 +112,14 @@ def main() -> None:
     top_user = get_top_user(sessions)
     logger.info("Top user by session count: %s", top_user)
 
-    logger.info("Building daily '%s' series ...", FORECAST_METRIC)
-    daily = build_daily_metric(sessions, top_user, FORECAST_METRIC)
-    logger.info("Last 5 days:\n%s", daily.tail().to_string())
+    last_15 = get_user_last_n_days(sessions, top_user, 15)
+    logger.info("Last 15 session-days for %s:\n%s", top_user, last_15.to_string(index=False))
 
-    logger.info("Forecasting %d days ahead ...", FORECAST_HORIZON_DAYS)
-    predictions = forecast(daily, FORECAST_HORIZON_DAYS)
+    logger.info("Building daily '%s' series for all users ...", FORECAST_METRIC)
+    daily = build_daily_metric(sessions, FORECAST_METRIC)
+
+    logger.info("Fitting AutoARIMA on %d users, forecasting %d days ...", daily["unique_id"].nunique(), FORECAST_HORIZON_DAYS)
+    predictions = forecast(daily, top_user, FORECAST_HORIZON_DAYS)
 
     Path(OUTPUT_FILE).parent.mkdir(parents=True, exist_ok=True)
     predictions.to_csv(OUTPUT_FILE, sep="\t", index=False)
