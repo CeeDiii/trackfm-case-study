@@ -1,14 +1,21 @@
-version: '3.8'
+x-spark: &spark
+  build: .
+  working_dir: /app
+  environment:
+    PYTHONPATH: /app/src
+  volumes:
+    - ./src:/app/src
+    - ./data:/app/data
 
 services:
-  jupyter-spark:
-    image: jupyter/pyspark-notebook:latest
-    container_name: spark_notebook_container
-    ports:
-      - "8888:8888"  # Jupyter Notebook Web UI
-      - "4040:4040"  # Spark Monitoring UI
-    environment:
-      - JUPYTER_ENABLE_LAB=yes  # Optional: Launches JupyterLab instead of regular Notebook
-    volumes:
-      - ./src:/home/jovyan/src
-      - ./data:/home/jovyan/data
+  ingest:
+    <<: *spark
+    command: python src/ingest.py
+
+  exercise2:
+    <<: *spark
+    command: python src/exercise2.py
+
+  exercise3:
+    <<: *spark
+    command: python src/exercise3.py
