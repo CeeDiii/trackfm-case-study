@@ -17,6 +17,7 @@ DOWNLOAD_URL = f"{BASE_URL}/{FILE_NAME}"
 
 
 def download() -> None:
+    """Download the Last.fm 1K dataset archive, skipping if already present."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     output_file = DATA_DIR / FILE_NAME
 
@@ -48,6 +49,7 @@ def download() -> None:
 
 
 def extract(archive) -> None:
+    """Extract the dataset archive into DATA_DIR, skipping if already extracted."""
     extracted_dir = DATA_DIR / "lastfm-dataset-1K"
     if extracted_dir.exists():
         logger.info("Already extracted: %s", extracted_dir)

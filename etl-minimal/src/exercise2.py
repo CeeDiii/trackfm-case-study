@@ -20,6 +20,7 @@ OUTPUT_FILE = str(BASE_DIR / "data/results/excercise2_top_10_songs_in_top_50_lon
 
 
 def main() -> None:
+    """Find the top 10 most-played songs across the 50 longest sessions and write results to TSV."""
     spark = create_spark_session()
     df = load_tsv(spark, DATA_FILE, SCHEMA)
     df = add_sessions(df, SESSION_GAP_IN_MIN)

@@ -28,6 +28,7 @@ FORECAST_HORIZON_DAYS = 90
 
 
 def build_session_summary(df: DataFrame) -> DataFrame:
+    """Aggregate per-session metrics: start/end timestamps, track count, and duration in minutes."""
     return df.groupBy("user_id", "session_id", "session").agg(
         F.min("started_at").alias("session_start"),
         F.max("started_at").alias("session_end"),
@@ -39,6 +40,7 @@ def build_session_summary(df: DataFrame) -> DataFrame:
 
 
 def get_top_user(session_summary: DataFrame) -> str:
+    """Return the user_id with the highest number of sessions."""
     return (
         session_summary
         .groupBy("user_id")
@@ -49,6 +51,7 @@ def get_top_user(session_summary: DataFrame) -> str:
 
 
 def build_daily_metric(session_summary: DataFrame, user_id: str, metric: str):
+    """Build a daily time series for a single user, ready for Prophet (columns: ds, y)."""
     user_sessions = (
         session_summary
         .filter(F.col("user_id") == user_id)
@@ -64,6 +67,7 @@ def build_daily_metric(session_summary: DataFrame, user_id: str, metric: str):
 
 
 def forecast(daily_df, horizon_days: int = FORECAST_HORIZON_DAYS):
+    """Fit a Prophet model and return predictions for the next horizon_days days."""
     m = Prophet()
     m.fit(daily_df)
     future = m.make_future_dataframe(periods=horizon_days)
@@ -71,6 +75,7 @@ def forecast(daily_df, horizon_days: int = FORECAST_HORIZON_DAYS):
 
 
 def main() -> None:
+    """Forecast session metrics for the top user and write predictions to TSV."""
     spark = create_spark_session()
     df = load_tsv(spark, DATA_FILE, SCHEMA)
     df = add_sessions(df, SESSION_GAP_IN_MIN)

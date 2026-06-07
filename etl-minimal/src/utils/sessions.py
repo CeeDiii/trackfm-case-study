@@ -11,6 +11,7 @@ from utils.constants import SESSION_GAP_IN_MIN
 
 
 def add_sessions(df: DataFrame, gap_minutes: int = SESSION_GAP_IN_MIN) -> DataFrame:
+    """Parse timestamps and attach a session struct {start, end} to each row."""
     return (
         df
         .withColumn("started_at", F.to_timestamp("timestamp_str"))
@@ -19,6 +20,7 @@ def add_sessions(df: DataFrame, gap_minutes: int = SESSION_GAP_IN_MIN) -> DataFr
 
 
 def add_session_ids(df: DataFrame) -> DataFrame:
+    """Add a session_id column in the format <user_id>_<session_start>."""
     return df.withColumn(
         "session_id",
         F.concat_ws("_", F.col("user_id"), F.col("session.start").cast("string")),
