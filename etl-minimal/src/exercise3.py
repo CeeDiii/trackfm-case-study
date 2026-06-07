@@ -9,6 +9,7 @@ AutoARIMA is trained on all users' daily data in a single call. Predictions
 are then filtered to the top user, giving exactly FORECAST_HORIZON_DAYS rows.
 """
 import logging
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -24,10 +25,10 @@ from utils.sessions import add_session_ids, add_sessions
 
 logger = logging.getLogger(__name__)
 
-OUTPUT_FILE = str(BASE_DIR / "data/results/exercise3_forecast.tsv")
+FORECAST_METRIC = "session_count"
+FORECAST_HORIZON_DAYS = int(os.getenv("FORECAST_HORIZON_DAYS", "90"))
 
-FORECAST_METRIC = "session_count"  # or "avg_duration_minutes"
-FORECAST_HORIZON_DAYS = 90
+OUTPUT_FILE = str(BASE_DIR / f"data/results/exercise3_forecast_{FORECAST_METRIC}.tsv")
 
 
 def build_session_summary(df: DataFrame) -> DataFrame:

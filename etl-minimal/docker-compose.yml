@@ -19,10 +19,13 @@ services:
   exercise3:
     <<: *spark
     command: python src/exercise3.py
+    environment:
+      PYTHONPATH: /app/src
+      FORECAST_HORIZON_DAYS: ${FORECAST_HORIZON_DAYS:-90}
 
-  all:
+  solve:
     <<: *spark
     command: >
-      sh -c "python src/ingest.py &&
-             python src/exercise2.py &&
-             python src/exercise3.py"
+      sh -c "python src/exercise2.py &&
+             FORECAST_METRIC=avg_duration_minutes FORECAST_HORIZON_DAYS=30 python src/exercise3.py &&
+             FORECAST_METRIC=session_count FORECAST_HORIZON_DAYS=30 python src/exercise3.py"
