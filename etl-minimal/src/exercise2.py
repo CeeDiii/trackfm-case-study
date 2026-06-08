@@ -16,7 +16,7 @@ from utils.sessions import add_session_ids, add_sessions
 
 logger = logging.getLogger(__name__)
 
-OUTPUT_FILE = str(BASE_DIR / "data/results/excercise2_top_10_songs_in_top_50_longest_sessions.tsv")
+OUTPUT_FILE = str(BASE_DIR / "data/results/exercise2_top_10_songs_in_top_50_longest_sessions.tsv")
 
 
 def main() -> None:

@@ -32,7 +32,7 @@ This runs exercise 2 followed by exercise 3 with a 90-day forecast horizon. Resu
 
 | File | Description |
 |---|---|
-| `excercise2_top_10_songs_in_top_50_longest_sessions.tsv` | Top 10 songs from the 50 longest sessions |
+| `exercise2_top_10_songs_in_top_50_longest_sessions.tsv` | Top 10 songs from the 50 longest sessions |
 | `exercise3_forecast_session_count.tsv` | 90-day session count forecast for the top user |
 
 **Run exercises individually:**
