@@ -4,3 +4,5 @@ __pycache__/
 **-checkpoint.ipynb
 data/**
 !data/.gitkeep
+!data/results/
+!data/results/**
