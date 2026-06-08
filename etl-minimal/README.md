@@ -18,7 +18,7 @@ docker-compose build
 docker-compose run ingest
 ```
 
-This downloads the Last.fm 1K dataset (~150 MB) into `data/` and extracts it. If the archive or extracted directory already exist the step is skipped automatically.
+This downloads the Last.fm 1K dataset (~640 MB) into `data/` and extracts it. If the archive or extracted directory already exist the step is skipped automatically.
 
 ### Step 3 — Run the exercises
 
@@ -28,12 +28,12 @@ This downloads the Last.fm 1K dataset (~150 MB) into `data/` and extracts it. If
 docker-compose run solve
 ```
 
-This runs exercise 2 followed by exercise 3 with a 30-day forecast horizon. Results are written to `data/results/`:
+This runs exercise 2 followed by exercise 3 with a 90-day forecast horizon. Results are written to `data/results/`:
 
 | File | Description |
 |---|---|
 | `excercise2_top_10_songs_in_top_50_longest_sessions.tsv` | Top 10 songs from the 50 longest sessions |
-| `exercise3_forecast_session_count.tsv` | 30-day session count forecast for the top user |
+| `exercise3_forecast_session_count.tsv` | 90-day session count forecast for the top user |
 
 **Run exercises individually:**
 
@@ -53,15 +53,8 @@ One environment variable controls the forecast horizon:
 Override the horizon inline:
 
 ```bash
-FORECAST_HORIZON_DAYS=30 docker-compose run exercise3
+FORECAST_HORIZON_DAYS=90 docker-compose run exercise3
 ```
-
-Or set it in a `.env` file next to `docker-compose.yml`:
-
-```
-FORECAST_HORIZON_DAYS=30
-```
-
 ---
 
 ## Assumptions
